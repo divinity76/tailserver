@@ -123,18 +123,23 @@ while ( true ) {
 	if (! empty ( $write )) {
 		// *someone* is ready to read. for those who are not? well, sucks to be them i guess.
 		y ( ! is_bool ( $newtext = fread ( $pipes [1], 100 ) ) ); // read 100 bytes at a time...
-		foreach ( $write as $client ) {
-			$sent = @socket_send ( $client, $newtext, strlen ( $newtext ), $async );
-			if (false === $sent) {
-				$lasterr = socket_last_error ( $client );
-				if ($lasterr !== EWOULDBLOCK && $lasterr !== EAGAIN) {
-					// something bad happened (maybe just a disconnect?), disconnect it.
-					$key = $ids [$client];
-					unset ( $ids [$client] );
-					socket_close ( $client );
-					unset ( $connections [$key] );
+		if (strlen ( $newtext ) > 0) {
+			foreach ( $write as $client ) {
+				$sent = @socket_send ( $client, $newtext, strlen ( $newtext ), $async );
+				if (false === $sent) {
+					$lasterr = socket_last_error ( $client );
+					if ($lasterr !== EWOULDBLOCK && $lasterr !== EAGAIN) {
+						// something bad happened (maybe just a disconnect?), disconnect it.
+						$key = $ids [$client];
+						unset ( $ids [$client] );
+						socket_close ( $client );
+						unset ( $connections [$key] );
+					}
 				}
 			}
+		} else {
+			// crap, clients are ready to read, but there is no new data...
+			sleep ( 1 ); // anyone got a better idea?
 		}
 	}
 }
