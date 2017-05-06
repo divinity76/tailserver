@@ -81,6 +81,7 @@ register_shutdown_function ( function () use (&$listen) {
 } );
 y ( socket_bind ( $listen, '0.0.0.0', $port ) );
 y ( socket_listen ( $listen ) );
+y ( socket_set_nonblock ( $listen ) );
 $newConn = NULL;
 $tmp = array ();
 $newConnId = 0;
@@ -105,21 +106,17 @@ while ( true ) {
 	}
 	if (! empty ( $read )) {
 		// new client(s)!
-		do {
+		while ( false !== ($newConn = socket_accept ( $listen )) ) {
 			echo 'new client!: ';
 			++ $newConnId;
-			y ( $newConn = socket_accept ( $listen ) );
 			$peername = '';
 			$peerport = - 1;
 			socket_getpeername ( $newConn, $peername, $peerport ); // << not async and can cause lag on slow rdns queries...
 			echo $peername . ':' . $peerport . PHP_EOL;
 			$ids->attach ( $connections [$newConnId] = $newConn, $newConnId );
-			$read = array (
-					$listen 
-			);
 			echo PHP_EOL . 'connected right now: ' . count ( $connections ) . '. connections all time: ' . $newConnId, PHP_EOL;
 			socket_shutdown ( $newConn, 0 ); // we are never going to read from this socket, soo...F
-		} while ( socket_select ( $read, $tmp, $tmp, 0 ) );
+		}
 		// accepted all clients. the new clients may want to read the latest updates too, so continue;
 		continue;
 	}
@@ -162,5 +159,3 @@ function hhb_return_var_dump(): string // works like var_dump, but returns a str
 	call_user_func_array ( 'var_dump', $args );
 	return ob_get_clean ();
 }
-
-
