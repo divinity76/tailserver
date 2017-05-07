@@ -60,6 +60,10 @@ class ResourceStorage implements ArrayAccess, Countable, IteratorAggregate {
 		return ob_get_clean ();
 	}
 }
+if (php_sapi_name () !== 'cli') {
+	die ( 'this script must run in cli!' ); // feel free to remove this line
+}
+
 ?>
 this is an async `tail -f` server, written in php.
 
@@ -164,3 +168,4 @@ function hhb_return_var_dump(): string // works like var_dump, but returns a str
 	call_user_func_array ( 'var_dump', $args );
 	return ob_get_clean ();
 }
+
