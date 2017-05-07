@@ -8,13 +8,11 @@ $tailFiles = array (
 		'stdout',
 		'stderr' 
 );
-
 // FIXME: 11 probably works on x86 linux, but its probably not portable
 //
 define ( 'EWOULDBLOCK', 11 );
 define ( 'EAGAIN', 11 );
 $connections = array ();
-
 class ResourceStorage implements ArrayAccess, Countable, IteratorAggregate {
 	protected $data = [ ];
 	public function count() {
@@ -63,7 +61,6 @@ class ResourceStorage implements ArrayAccess, Countable, IteratorAggregate {
 if (php_sapi_name () !== 'cli') {
 	die ( 'this script must run in cli!' ); // feel free to remove this line
 }
-
 ?>
 this is an async `tail -f` server, written in php.
 
@@ -71,7 +68,6 @@ this is an async `tail -f` server, written in php.
 
 to connect to it, write in a terminal: netcat ip port
 <?php
-
 $pipedescriptor = array (
 		1 => array (
 				'pipe',
@@ -89,7 +85,6 @@ y ( socket_set_nonblock ( $listen ) );
 $newConn = NULL;
 $tmp = array ();
 $newConnId = 0;
-
 $ids = new ResourceStorage ();
 echo 'starting... ', PHP_EOL;
 while ( true ) {
@@ -119,7 +114,8 @@ while ( true ) {
 			echo $peername . ':' . $peerport . PHP_EOL;
 			$ids->attach ( $connections [$newConnId] = $newConn, $newConnId );
 			echo PHP_EOL . 'connected right now: ' . count ( $connections ) . '. connections all time: ' . $newConnId, PHP_EOL;
-			socket_shutdown ( $newConn, 0 ); // we are never going to read from this socket, soo...F
+			y ( socket_shutdown ( $newConn, 0 ) ); // we are never going to read from this socket, soo...F
+			y ( socket_set_nonblock ( $newConn ) );
 		}
 		// accepted all clients. the new clients may want to read the latest updates too, so continue;
 		continue;
@@ -147,7 +143,6 @@ while ( true ) {
 		}
 	}
 }
-
 function y($in) {
 	if (! $in) {
 		$str = hhb_return_var_dump ( socket_last_error (), socket_strerror ( socket_last_error () ) );
