@@ -1,15 +1,16 @@
 <?php
 declare(strict_types = 1);
 error_reporting ( E_ALL );
-$async = MSG_DONTWAIT; //
 $port = 9999;
+$bytesPerSend = 10; // number of bytes to read from the tail..
 $tailFiles = array (
 		// '/var/log/nginx/access.log' ,
 		'stdout',
 		'stderr' 
 );
-// FIXME: 11 probably works on x86 linux, but its probably not portable
-//
+
+$async = MSG_DONTWAIT; //
+                       // FIXME: 11 probably works on x86 linux, but its probably not portable
 define ( 'EWOULDBLOCK', 11 );
 define ( 'EAGAIN', 11 );
 $connections = array ();
@@ -122,7 +123,7 @@ while ( true ) {
 	}
 	if (! empty ( $write )) {
 		// *someone* is ready to read. for those who are not? well, sucks to be them i guess.
-		y ( ! is_bool ( $newtext = fread ( $pipes [1], 100 ) ) ); // read 100 bytes at a time...
+		y ( ! is_bool ( $newtext = fread ( $pipes [1], $bytesPerSend ) ) ); 
 		if (strlen ( $newtext ) > 0) {
 			foreach ( $write as $client ) {
 				$sent = @socket_send ( $client, $newtext, strlen ( $newtext ), $async );
