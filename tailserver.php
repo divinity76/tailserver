@@ -84,7 +84,7 @@ y ( socket_bind ( $listen, '0.0.0.0', $port ) );
 y ( socket_listen ( $listen ) );
 y ( socket_set_nonblock ( $listen ) );
 $newConn = NULL;
-$tmp = array ();
+$emptyArray = array ();
 $newConnId = 0;
 $ids = new ResourceStorage ();
 echo 'starting... ', PHP_EOL;
@@ -123,8 +123,12 @@ while ( true ) {
 	}
 	if (! empty ( $write )) {
 		// *someone* is ready to read. for those who are not? well, sucks to be them i guess.
-		y ( ! is_bool ( $newtext = fread ( $pipes [1], $bytesPerSend ) ) ); 
+		y ( ! is_bool ( $newtext = fread ( $pipes [1], $bytesPerSend ) ) );
 		if (strlen ( $newtext ) > 0) {
+			// in case reading $bytesPerSend tail bytes took time, refresh number of clients ready to read.
+			$write = $connections;
+			y ( ! is_bool ( socket_select ( $emptyArray, $write, $emptyArray, NULL ) ) );
+			assert ( ! empty ( $write ) ); // <<should never happen at this point...
 			foreach ( $write as $client ) {
 				$sent = @socket_send ( $client, $newtext, strlen ( $newtext ), $async );
 				if (false === $sent) {
